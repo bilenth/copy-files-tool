@@ -1,0 +1,14 @@
+﻿.vs
+packages
+obj
+bin
+Debug
+Release
+PublishProfiles
+ServiceDependencies
+ServiceDependencies*
+*.user
+*.log
+*.azureRMPubxml
+
+.fake
