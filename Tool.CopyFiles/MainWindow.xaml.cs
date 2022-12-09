@@ -1,18 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Path = System.IO.Path;
 
 namespace DDDToolWPF
 {
@@ -36,7 +27,8 @@ namespace DDDToolWPF
             {
                 if (File.Exists(folderPath))
                 {
-                    await FileCopyAndReplaceAsync(new FileInfo(folderPath), oldValue, newValue);
+                    FileInfo oldFile = new FileInfo(folderPath);
+                    await FileCopyAndReplaceAsync(oldFile.DirectoryName, oldFile, oldValue, newValue);
                 }
                 else if (Directory.Exists(folderPath))
                 {
@@ -57,7 +49,7 @@ namespace DDDToolWPF
 
         }
 
-        public static async System.Threading.Tasks.Task FolderCopyAndReplaceAsync(DirectoryInfo oldFolder, string oldValue, string newValue)
+        public async Task FolderCopyAndReplaceAsync(DirectoryInfo oldFolder, string oldValue, string newValue)
         {
             string newFolderPath = oldFolder.FullName.Replace(oldValue, newValue);
             if (!Directory.Exists(newFolderPath))
@@ -65,23 +57,23 @@ namespace DDDToolWPF
                 Directory.CreateDirectory(newFolderPath);
             }
 
-            foreach (FileInfo nextFile in oldFolder.EnumerateFiles())
+            foreach (FileInfo subOldFile in oldFolder.EnumerateFiles())
             {
-                await FileCopyAndReplaceAsync(nextFile, oldValue, newValue);
+                await FileCopyAndReplaceAsync(newFolderPath, subOldFile, oldValue, newValue);
             }
 
-            foreach (DirectoryInfo nextFolder in oldFolder.GetDirectories())
+            foreach (DirectoryInfo subOldFolder in oldFolder.GetDirectories())
             {
-                await FolderCopyAndReplaceAsync(nextFolder, oldValue, newValue);
+                await FolderCopyAndReplaceAsync(subOldFolder, oldValue, newValue);
             }
         }
 
-        private static async Task FileCopyAndReplaceAsync(FileInfo nextFile, string oldValue, string newValue)
+        private static async Task FileCopyAndReplaceAsync(string targetFolder, FileInfo oldFile, string oldValue, string newValue)
         {
-            string newFilePath = nextFile.FullName.Replace(oldValue, newValue);
+            string newFilePath = Path.Combine(targetFolder, oldFile.Name.Replace(oldValue, newValue));
             if (!File.Exists(newFilePath))
             {
-                string oldText = await File.ReadAllTextAsync(nextFile.FullName);
+                string oldText = await File.ReadAllTextAsync(oldFile.FullName);
                 string newText = oldText.Replace(oldValue, newValue);
 
                 await File.WriteAllTextAsync(newFilePath, newText);
