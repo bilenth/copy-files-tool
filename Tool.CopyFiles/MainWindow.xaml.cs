@@ -22,17 +22,21 @@ namespace DDDToolWPF
             string folderPath = tbFolderPath.Text;
             string oldValue = tbOldValue.Text;
             string newValue = tbNewValue.Text;
+            string rootPath;
 
             try
             {
                 if (File.Exists(folderPath))
                 {
                     FileInfo oldFile = new FileInfo(folderPath);
-                    await FileCopyAndReplaceAsync(oldFile.DirectoryName, oldFile, oldValue, newValue);
+                    rootPath = oldFile.DirectoryName;
+                    await FileCopyAndReplaceAsync(oldFile, oldValue, newValue);
                 }
                 else if (Directory.Exists(folderPath))
                 {
-                    await FolderCopyAndReplaceAsync(new DirectoryInfo(folderPath), oldValue, newValue);
+                    DirectoryInfo oldFolder = new DirectoryInfo(folderPath);
+                    rootPath = oldFolder.Parent.FullName;
+                    await FolderCopyAndReplaceAsync(oldFolder, oldValue, newValue);
                 }
                 else
                 {
@@ -47,37 +51,44 @@ namespace DDDToolWPF
                 lblMessage.Visibility = Visibility.Visible;
             }
 
+
+            async Task FolderCopyAndReplaceAsync(DirectoryInfo oldFolder, string oldValue, string newValue)
+            {
+                string newFolderPath = GetNewPath(oldFolder.FullName, oldValue, newValue);
+                if (!Directory.Exists(newFolderPath))
+                {
+                    Directory.CreateDirectory(newFolderPath);
+                }
+
+                foreach (FileInfo subOldFile in oldFolder.EnumerateFiles())
+                {
+                    await FileCopyAndReplaceAsync(subOldFile, oldValue, newValue);
+                }
+
+                foreach (DirectoryInfo subOldFolder in oldFolder.GetDirectories())
+                {
+                    await FolderCopyAndReplaceAsync(subOldFolder, oldValue, newValue);
+                }
+            }
+
+            async Task FileCopyAndReplaceAsync(FileInfo oldFile, string oldValue, string newValue)
+            {
+                string newFilePath = GetNewPath(oldFile.FullName, oldValue, newValue);
+                if (!File.Exists(newFilePath))
+                {
+                    string oldText = await File.ReadAllTextAsync(oldFile.FullName);
+                    string newText = oldText.Replace(oldValue, newValue);
+
+                    await File.WriteAllTextAsync(newFilePath, newText);
+                }
+            }
+
+            string GetNewPath(string oldFolder, string oldValue, string newValue)
+            {
+                return oldFolder[..rootPath.Length] + oldFolder[rootPath.Length..].Replace(oldValue, newValue);
+            }
         }
 
-        public async Task FolderCopyAndReplaceAsync(DirectoryInfo oldFolder, string oldValue, string newValue)
-        {
-            string newFolderPath = oldFolder.FullName.Replace(oldValue, newValue);
-            if (!Directory.Exists(newFolderPath))
-            {
-                Directory.CreateDirectory(newFolderPath);
-            }
 
-            foreach (FileInfo subOldFile in oldFolder.EnumerateFiles())
-            {
-                await FileCopyAndReplaceAsync(newFolderPath, subOldFile, oldValue, newValue);
-            }
-
-            foreach (DirectoryInfo subOldFolder in oldFolder.GetDirectories())
-            {
-                await FolderCopyAndReplaceAsync(subOldFolder, oldValue, newValue);
-            }
-        }
-
-        private static async Task FileCopyAndReplaceAsync(string targetFolder, FileInfo oldFile, string oldValue, string newValue)
-        {
-            string newFilePath = Path.Combine(targetFolder, oldFile.Name.Replace(oldValue, newValue));
-            if (!File.Exists(newFilePath))
-            {
-                string oldText = await File.ReadAllTextAsync(oldFile.FullName);
-                string newText = oldText.Replace(oldValue, newValue);
-
-                await File.WriteAllTextAsync(newFilePath, newText);
-            }
-        }
     }
 }
