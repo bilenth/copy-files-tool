@@ -42,7 +42,7 @@ namespace DDDToolWPF
                 {
                     Console.WriteLine("Folder Path no exists");
                 }
-                lblMessage.Content = "Successful.";
+                lblMessage.Content = $"Successful. {DateTime.Now:HH:mm:ss}";
                 lblMessage.Visibility = Visibility.Visible;
             }
             catch (Exception ex)
