@@ -6,15 +6,4 @@
     <UseWPF>true</UseWPF>
     <ApplicationIcon>CopyFIles.ico</ApplicationIcon>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Content Include="CopyFIles.ico" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="CopyFIles.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>
