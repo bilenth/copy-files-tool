@@ -1,27 +1,9 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Shapes;
-using Path = System.IO.Path;
-
-namespace DDDToolWPF
+﻿namespace CopyFiles.Core
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-    public partial class MainWindow : Window
+    public class CopyFiles
     {
-        public MainWindow()
+        public static async Task<string> RunAsync(string folderPath, string oldValue, string newValue)
         {
-            InitializeComponent();
-        }
-
-        private async void Button_Click(object sender, RoutedEventArgs e)
-        {
-            string folderPath = tbFolderPath.Text;
-            string oldValue = tbOldValue.Text;
-            string newValue = tbNewValue.Text;
             string rootPath;
 
             try
@@ -29,26 +11,24 @@ namespace DDDToolWPF
                 if (File.Exists(folderPath))
                 {
                     FileInfo oldFile = new FileInfo(folderPath);
-                    rootPath = oldFile.DirectoryName;
+                    rootPath = oldFile.DirectoryName!;
                     await FileCopyAndReplaceAsync(oldFile, oldValue, newValue);
                 }
                 else if (Directory.Exists(folderPath))
                 {
                     DirectoryInfo oldFolder = new DirectoryInfo(folderPath);
-                    rootPath = oldFolder.Parent.FullName;
+                    rootPath = oldFolder.Parent!.FullName;
                     await FolderCopyAndReplaceAsync(oldFolder, oldValue, newValue);
                 }
                 else
                 {
-                    Console.WriteLine("Folder Path no exists");
+                    return "Folder Path no exists";
                 }
-                lblMessage.Content = $"Successful. {DateTime.Now:HH:mm:ss}";
-                lblMessage.Visibility = Visibility.Visible;
+                return $"Successful. {DateTime.Now:HH:mm:ss}";
             }
             catch (Exception ex)
             {
-                lblMessage.Content = ex.ToString();
-                lblMessage.Visibility = Visibility.Visible;
+                return ex.ToString();
             }
 
 
@@ -88,7 +68,5 @@ namespace DDDToolWPF
                 return oldFolder[..rootPath.Length] + oldFolder[rootPath.Length..].Replace(oldValue, newValue);
             }
         }
-
-
     }
 }
